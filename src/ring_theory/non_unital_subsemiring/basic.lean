@@ -254,7 +254,7 @@ s.to_add_submonoid.sum_mem h
 lemma nsmul_mem {x : R} (hx : x ∈ s) (n : ℕ) :
   n • x ∈ s := s.to_add_submonoid.nsmul_mem hx n
 
-/- This has a few issues
+--This has a few issues
 /-- A non-unital subsemiring of a `non_unital_non_assoc_semiring` inherits a
 `non_unital_non_assoc_semiring` structure -/
 instance to_non_unital_non_assoc_semiring : non_unital_non_assoc_semiring s :=
@@ -262,28 +262,29 @@ instance to_non_unital_non_assoc_semiring : non_unital_non_assoc_semiring s :=
   zero_mul := λ x, subtype.eq $ zero_mul x,
   right_distrib := λ x y z, subtype.eq $ right_distrib x y z,
   left_distrib := λ x y z, subtype.eq $ left_distrib x y z,
-  mul := sorry, -- there is no .. s.to_subsemigroup.to_semigruop,
+  mul := λ x y, ⟨x.val * y.val, s.mul_mem' x.property y.property⟩,
+  -- there is no .. s.to_subsemigroup.to_semigroup to give us mul, maybe we should define it?
   .. s.to_add_submonoid.to_add_comm_monoid }
-  -/
 
-#exit
 
-@[simp, norm_cast] lemma coe_one : ((1 : s) : R) = (1 : R) := rfl
 @[simp, norm_cast] lemma coe_zero : ((0 : s) : R) = (0 : R) := rfl
 @[simp, norm_cast] lemma coe_add (x y : s) : ((x + y : s) : R) = (x + y : R) := rfl
 @[simp, norm_cast] lemma coe_mul (x y : s) : ((x * y : s) : R) = (x * y : R) := rfl
-
-instance nontrivial [nontrivial R] : nontrivial s :=
-nontrivial_of_ne 0 1 $ λ H, zero_ne_one (congr_arg subtype.val H)
 
 instance no_zero_divisors [no_zero_divisors R] : no_zero_divisors s :=
 { eq_zero_or_eq_zero_of_mul_eq_zero := λ x y h,
   or.cases_on (eq_zero_or_eq_zero_of_mul_eq_zero $ subtype.ext_iff.mp h)
     (λ h, or.inl $ subtype.eq h) (λ h, or.inr $ subtype.eq h) }
 
-/-- A subsemiring of a `semiring` is a `semiring`. -/
-instance to_semiring {R} [semiring R] (s : subsemiring R) : semiring s :=
-{ ..s.to_non_assoc_semiring, ..s.to_submonoid.to_monoid }
+#exit
+
+-- okay, now we really need that instance for associativity
+/-- A non-unital subsemiring of a `non_unital_semiring` is a `non_unital_semiring`. -/
+instance to_semiring {R} [non_unital_semiring R] (s : non_unital_subsemiring R) :
+  non_unital_semiring s :=
+{ ..s.to_non_unital_non_assoc_semiring, ..s.to_subsemigroup.to_semigroup }
+
+
 
 @[simp, norm_cast] lemma coe_pow {R} [semiring R] (s : subsemiring R) (x : s) (n : ℕ) :
   ((x^n : s) : R) = (x^n : R) :=
