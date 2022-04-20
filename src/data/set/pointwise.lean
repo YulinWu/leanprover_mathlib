@@ -1042,6 +1042,10 @@ instance set_semiring.non_unital_semiring [semigroup α] : non_unital_semiring (
 instance set_semiring.semiring [monoid α] : semiring (set_semiring α) :=
 { ..set_semiring.non_assoc_semiring, ..set_semiring.non_unital_semiring }
 
+instance set_semiring.non_unital_comm_semiring [comm_semigroup α] :
+  non_unital_comm_semiring (set_semiring α) :=
+{ ..set_semiring.non_unital_semiring, ..set.comm_semigroup }
+
 instance set_semiring.comm_semiring [comm_monoid α] : comm_semiring (set_semiring α) :=
 { ..set.comm_monoid, ..set_semiring.semiring }
 
@@ -1283,7 +1287,7 @@ begin
   { exact ⟨0, by simpa using one_mem _⟩ },
   { rintro x y ⟨nx, hx⟩ ⟨ny, hy⟩,
     use nx + ny,
-    convert mul_mem _ hx hy,
+    convert mul_mem hx hy,
     rw [pow_add, smul_mul_assoc, mul_smul, mul_comm, ← smul_mul_assoc, mul_comm] }
 end
 
