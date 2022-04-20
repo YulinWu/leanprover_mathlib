@@ -28,6 +28,7 @@ variables {A M : Type*} [has_mul M] [set_like A M] [hA : mul_mem_class A M] (S' 
 include hA
 
 -- this should replace `submonoid_class.has_mul`, but the question is where to put it.
+-- maybe we should also phrase it about magmas?
 /-- A subsemigroup of a semigroup inherits a multiplication. -/
 @[to_additive "An additive subsemigroup of an additive semigroup inherits an addition."]
 instance has_mul : has_mul S' := ⟨λ a b, ⟨a.1 * b.1, mul_mem a.2 b.2⟩⟩
@@ -47,6 +48,16 @@ def subtype : mul_hom S' M := ⟨coe, λ _ _, rfl⟩
 @[simp, to_additive] theorem coe_subtype : (mul_mem_class.subtype S' : S' → M) = coe := rfl
 
 end mul_mem_class
+
+@[to_additive]
+instance subsemigroup.mul_mem_class {M : Type*} [semigroup M] : mul_mem_class (subsemigroup M) M :=
+{ mul_mem := subsemigroup.mul_mem' }
+
+/-- A subsemigroup of a semigroup inherits a semigroup structure. -/
+@[to_additive "An `add_subsemigroup` of an `add_semigroup` inherits an `add_semigroup`
+structure."]
+instance subsemigroup.to_semigroup {M : Type*} [semigroup M] (S : subsemigroup M) : semigroup S :=
+subtype.coe_injective.semigroup coe (λ _ _, rfl)
 
 end prelim
 
@@ -254,7 +265,7 @@ s.to_add_submonoid.sum_mem h
 lemma nsmul_mem {x : R} (hx : x ∈ s) (n : ℕ) :
   n • x ∈ s := s.to_add_submonoid.nsmul_mem hx n
 
---This has a few issues
+-- Is it a problem that we had to define the multiplication separately?
 /-- A non-unital subsemiring of a `non_unital_non_assoc_semiring` inherits a
 `non_unital_non_assoc_semiring` structure -/
 instance to_non_unital_non_assoc_semiring : non_unital_non_assoc_semiring s :=
@@ -263,9 +274,7 @@ instance to_non_unital_non_assoc_semiring : non_unital_non_assoc_semiring s :=
   right_distrib := λ x y z, subtype.eq $ right_distrib x y z,
   left_distrib := λ x y z, subtype.eq $ left_distrib x y z,
   mul := λ x y, ⟨x.val * y.val, s.mul_mem' x.property y.property⟩,
-  -- there is no .. s.to_subsemigroup.to_semigroup to give us mul, maybe we should define it?
   .. s.to_add_submonoid.to_add_comm_monoid }
-
 
 @[simp, norm_cast] lemma coe_zero : ((0 : s) : R) = (0 : R) := rfl
 @[simp, norm_cast] lemma coe_add (x y : s) : ((x + y : s) : R) = (x + y : R) := rfl
@@ -276,27 +285,18 @@ instance no_zero_divisors [no_zero_divisors R] : no_zero_divisors s :=
   or.cases_on (eq_zero_or_eq_zero_of_mul_eq_zero $ subtype.ext_iff.mp h)
     (λ h, or.inl $ subtype.eq h) (λ h, or.inr $ subtype.eq h) }
 
-#exit
-
--- okay, now we really need that instance for associativity
 /-- A non-unital subsemiring of a `non_unital_semiring` is a `non_unital_semiring`. -/
-instance to_semiring {R} [non_unital_semiring R] (s : non_unital_subsemiring R) :
+instance to_non_unital_semiring {R} [non_unital_semiring R] (s : non_unital_subsemiring R) :
   non_unital_semiring s :=
 { ..s.to_non_unital_non_assoc_semiring, ..s.to_subsemigroup.to_semigroup }
 
+#exit
 
-
-@[simp, norm_cast] lemma coe_pow {R} [semiring R] (s : subsemiring R) (x : s) (n : ℕ) :
-  ((x^n : s) : R) = (x^n : R) :=
-begin
-  induction n with n ih,
-  { simp, },
-  { simp [pow_succ, ih], },
-end
-
-/-- A subsemiring of a `comm_semiring` is a `comm_semiring`. -/
-instance to_comm_semiring {R} [comm_semiring R] (s : subsemiring R) : comm_semiring s :=
-{ mul_comm := λ _ _, subtype.eq $ mul_comm _ _, ..s.to_semiring}
+-- again, here we will need non-unital comm semirings
+/-- A non-unital subsemiring of a `non_unital_comm_semiring` is a `non_unital_comm_semiring`. -/
+instance to_non_unital_comm_semiring {R} [non_unital_comm_semiring R]
+  (s : non_unital_subsemiring R) : comm_semiring s :=
+{ mul_comm := λ _ _, subtype.eq $ mul_comm _ _, ..s.to_non_unital_semiring}
 
 /-- The natural ring hom from a subsemiring of semiring `R` to `R`. -/
 def subtype : s →+* R :=
